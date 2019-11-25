@@ -17,6 +17,11 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
+        return response()->json(['name'=>$request->user->name,'money'=>$request->user->money,'role'=>$request->user->role],200);
+    }
+    
+    public function history(Request $request)
+    {
         if ($request->user->role) {
             // history
             $history = UserReward::where('hunter_id',$request->user->id)
@@ -31,7 +36,7 @@ class UserController extends Controller
         ->select('name','done')
         ->get();
 
-        return response()->json(['name'=>$request->user->name,'money'=>$request->user->money,'history'=>$history,'posts'=>$posts],200);
+        return response()->json(['history'=>$history,'posts'=>$posts],200);
 
     }
     public function login(Request $request)

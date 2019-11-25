@@ -15,7 +15,7 @@ class RewardController extends Controller
      */
     public function index()
     {
-        return response()->json(['reward'=>Reward::get()],200);
+        return response()->json(['reward'=>Reward::where('done',0)->get()],200);
     }
 
     /**
