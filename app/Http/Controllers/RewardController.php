@@ -17,7 +17,8 @@ class RewardController extends Controller
      */
     public function index()
     {
-        return response()->json(['reward'=>Reward::where('done',0)->get()],200);
+        $rewards = Reward::where('done',0)->get();
+        return response()->json(['reward'=>$rewards],200);
     }
 
     /**
@@ -77,6 +78,13 @@ class RewardController extends Controller
             ['reward_id'=>$id,
              'hunter_id'=>$request->user->id,
             ]);
+        $reward = Reward::where('id',$id)->first();
+        if ($reward->hunters) {
+            $reward->update(['hunters'=>$request->user->name]);
+        }else {
+            $reward->update(['hunters'=>$reward->hunters.','.$request->user->name]);
+        }
+        
         $hunters = UserReward::where('reward_id',$id)
         ->join('users','users.id', '=', 'hunter_id')
         ->select('users.name')
@@ -104,8 +112,12 @@ class RewardController extends Controller
      */
     public function update(Request $request, $id)
     {
+        
         $reward = Reward::where(
             'id', $id)->first();
+        if (!$reward->hunters) {
+            return response()->json(['result'=>"You don't hunter the reward"],403);
+        }
         $reward->update(['done'=>1]);
         $user_reward = UserReward::where(
             'reward_id', $id)->delete();
