@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Hash;
 use App\User; 
 use App\Reward; 
 use App\UserReward;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
@@ -41,7 +43,7 @@ class UserController extends Controller
     }
     public function login(Request $request)
     {
-        return response()->json(['user'=> $request->user->only('name','role','money','remember_token')],201);
+        return response()->json(['user'=> $request->user->only('name','role','money','remember_token')],200);
     }
     /**
      * Show the form for creating a new resource.
@@ -63,7 +65,14 @@ class UserController extends Controller
     {
         $out = new \Symfony\Component\Console\Output\ConsoleOutput();
         $out->writeln("store".$request->role);
-        
+        $va = Validator::make($request->all(), [
+            'name' => 'required|unique:users,name|max:15',
+            'account' => 'required|unique:users,account|max:15',
+            'role' => 'required|integer|between:0,1',
+        ]);
+        if ($va->fails()) {
+            return response()->json(['result'=>$va->errors()],416);
+        }
         $user = User::create([
             'name' => $request->name,
             'account' => $request->account,
