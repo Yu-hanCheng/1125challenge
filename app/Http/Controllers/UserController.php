@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\User; 
+use App\Reward; 
 use App\UserReward;
 
 class UserController extends Controller
@@ -16,13 +17,21 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        // history
-        $history = UserReward::where('hunter_id',$request->user->id)
-        ->join('rewards','rewards.id', '=', 'reward_id')
-        ->select('rewards.name')
+        if ($request->user->role) {
+            // history
+            $history = UserReward::where('hunter_id',$request->user->id)
+            ->join('rewards','rewards.id', '=', 'reward_id')
+            ->select('rewards.name','rewards.done')
+            ->get();
+        }else {
+            //post
+            $history = null;
+        }
+        $posts=Reward::where('user_id',$request->user->id)
+        ->select('name','done')
         ->get();
 
-        return response()->json(['name'=>$request->user->name,'money'=>$request->user->money,'history'=>$history,],200);
+        return response()->json(['name'=>$request->user->name,'money'=>$request->user->money,'history'=>$history,'posts'=>$posts],200);
 
     }
     public function login(Request $request)
