@@ -58,7 +58,10 @@ class RewardController extends Controller
             ['reward_id'=>$id,
              'hunter_id'=>$request->user->id,
             ]);
-        $hunters = UserReward::where('reward_id',$id)->get();
+        $hunters = UserReward::where('reward_id',$id)
+        ->join('users','users.id', '=', 'hunter_id')
+        ->select('users.name')
+        ->get();
         return response()->json(['hunters'=>$hunters],201);
     }
 

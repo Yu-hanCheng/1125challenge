@@ -29,10 +29,10 @@ class AuthServiceProvider extends ServiceProvider
         Auth::viaRequest('custom-token', function ($request) {
             $out = new \Symfony\Component\Console\Output\ConsoleOutput();
             
-            if (!$request->remember_token) {
+            if (!$request->header('remember_token')) {
                 return null;
             }else {
-                $user =User::where('remember_token', $request->remember_token)->first();
+                $user =User::where('remember_token', $request->header('remember_token'))->first();
                 if ($user) {
                     Auth::login($user);
                     return $user;

@@ -14,9 +14,16 @@ class UserController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        // history
+        $history = UserReward::where('hunter_id',$request->user->id)
+        ->join('rewards','rewards.id', '=', 'reward_id')
+        ->select('rewards.name')
+        ->get();
+
+        return response()->json(['name'=>$request->user->name,'money'=>$request->user->money,'history'=>$history,],200);
+
     }
     public function login(Request $request)
     {
@@ -64,12 +71,7 @@ class UserController extends Controller
      */
     public function show($id)
     {
-        // history
-        $user = User::where('id', $id)->get();
-        $history = UserReward::where('hunter_id',$id)->get();
-
-        return response()->json(['name'=>$user->name,'money'=>$user->money,'history'=>$history,],200);
-
+        
     }
 
     /**

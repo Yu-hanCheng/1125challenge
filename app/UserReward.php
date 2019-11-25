@@ -8,6 +8,6 @@ class UserReward extends Model
 {
     protected $guarded = [];
     protected $hidden = [
-        'created_at','updated_at',
+        'id','hunter_id','created_at','updated_at',
     ];
 }
