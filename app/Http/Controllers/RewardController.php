@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Reward; 
+use App\Reward;
+use App\User;
 use App\UserReward;
-
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 class RewardController extends Controller
 {
     /**
@@ -36,6 +38,22 @@ class RewardController extends Controller
      */
     public function store(Request $request)
     {
+        $va = Validator::make($request->all(), [
+            'name' => 'required|unique:rewards,name|max:15',
+            'bonus' => ['required',
+                        'max:15'],
+            'descript' => 'required|max:205',
+            'category' => 'required|integer|between:1,2',
+        ]);
+        if ($va->fails()) {
+            return response()->json(['result'=>$va->errors()],416);
+        }
+
+        if ($request->user->cost + $request->bonus >$request->user->money) {
+            return response()->json(['result'=>["bonus"=> [
+                "The bonus is over you can afford."]]],416);
+        }
+
         $reward = Reward::create([
             'name' => $request->name,
             'bonus' => $request->bonus,
@@ -43,7 +61,8 @@ class RewardController extends Controller
             'category'=>$request->category,
             'user_id'=>$request->user->id,
         ]);
-        return response()->json(['reward'=>$reward],201);
+        User::where('id',$request->user->id)->update(['cost'=>$request->user->cost + $request->bonus ]);
+        return response()->json(['reward'=>$reward ],201);
     }
 
     /**
@@ -86,7 +105,15 @@ class RewardController extends Controller
     public function update(Request $request, $id)
     {
         $reward = Reward::where(
-            'id', $id)->update(['done'=>1]);
+            'id', $id)->first();
+        $reward->update(['done'=>1]);
+        $user_reward = UserReward::where(
+            'reward_id', $id)->delete();
+
+        $hunter = User::where('id',$request->user->id)->update(['money'=>$request->user->money + $reward->bonus ]);
+        $user = User::where('id',$reward->user_id)
+                ->update(['money'=>$request->user->money - $reward->bonus, 
+                        'cost'=>$request->user->cost - $reward->bonus, ]);
         return response()->json(['reward'=>$reward],200);
     }
 

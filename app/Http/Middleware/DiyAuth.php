@@ -39,7 +39,6 @@ class DiyAuth
                     $out->writeln("* attempt error:* ".$th);
                 }
             }
-            
             return $next($request);
         } catch (\Throwable $th) {
             $out->writeln("* first error:* ".$th);
