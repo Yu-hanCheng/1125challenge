@@ -79,7 +79,7 @@ class RewardController extends Controller
              'hunter_id'=>$request->user->id,
             ]);
         $reward = Reward::where('id',$id)->first();
-        if ($reward->hunters) {
+        if (!$reward->hunters) {
             $reward->update(['hunters'=>$request->user->name]);
         }else {
             $reward->update(['hunters'=>$reward->hunters.','.$request->user->name]);
