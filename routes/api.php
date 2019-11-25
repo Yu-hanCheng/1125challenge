@@ -16,3 +16,13 @@ use Illuminate\Http\Request;
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
+
+Route::post('register', 'UserController@store');
+
+Route::group(['middleware' => ['auth.user']], function(){
+    Route::get('logout', 'UserController@logout');
+    Route::post('login', 'UserController@login');
+    Route::resource('reward', 'RewardController')->only(['index','show', 'store']);
+    Route::get('reward/{id}/done', 'RewardController@update');
+    Route::resource('profile', 'UserController')->only(['show']);
+});
