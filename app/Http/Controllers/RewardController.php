@@ -90,7 +90,7 @@ class RewardController extends Controller
 
         if ($request->user->cost + $request->budget >$request->user->money) {
             return response()->json(['result'=>
-                "The bonus is over you can afford."],416);
+                "The budget is over you can afford."],416);
         }
 
         $reward = Reward::create([
