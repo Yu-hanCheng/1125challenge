@@ -19,6 +19,8 @@ class CreateUsersTable extends Migration
             $table->string('account');
             $table->string('password');
             $table->integer('role');
+            $table->integer('achieveRate')->default(0);
+            $table->integer('experience')->default(0);
             $table->integer('money')->default(3000);
             $table->integer('cost')->default(0);
             $table->rememberToken();

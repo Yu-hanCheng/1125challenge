@@ -21,7 +21,7 @@ class RewardController extends Controller
         foreach ($rewards as $reward) {
             $hunters = UserReward::where('reward_id',$reward->id)
                 ->join('users','users.id', '=', 'user_rewards.hunter_id')
-                ->select('users.name','user_rewards.id as user_rewards_id','user_rewards.fee')->get();
+                ->select('users.name','users.achieveRate','users.experience','user_rewards.id as user_rewards_id','user_rewards.fee')->get();
             $reward->update(['hunters'=>$hunters]);
         }
         return response()->json(['reward'=>$rewards],200);
