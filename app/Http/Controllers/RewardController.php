@@ -176,10 +176,8 @@ class RewardController extends Controller
         }
 
         $imageURL = request()->file('img')->store('public');
-        // dd($imageURL); 
-        return asset('storage/' . $imageURL);
 
-        $reward->update(['reported_descript'=>"donedonedone"]);
+        $reward->update(['reported_descript'=>$request->reported_descript,'img'=>asset('storage/' . substr($imageURL, 7))]);
         $user_reward = UserReward::where(
             [['reward_id','=', $id],['hunter_id','!=', $request->user->id]])->delete();
 
