@@ -100,7 +100,7 @@ class RewardController extends Controller
             'user_id'=>$request->user->id,
         ]);
         User::where('id',$request->user->id)->update(['cost'=>$request->user->cost + $request->budget ]);
-        return response()->json(['reward'=>$reward ],201);
+        return response()->json(['reward'=>Reward::find($reward->id) ],201);
     }
 
     /**
