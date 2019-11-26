@@ -19,14 +19,13 @@ class CreateRewardsTable extends Migration
             $table->string('descript');
             $table->string('name');
             $table->string('img')->nullable();
-            $table->string('report_descript')->nullable();
+            $table->string('reported_descript')->nullable();
             $table->longText('hunters')->nullable();
             $table->integer('budget');
             $table->integer('bonus')->nullable();
             $table->integer('category');
             $table->boolean('done')->nullable();
             $table->boolean('chosen')->default(0);
-            $table->boolean('reported')->default(0);
             $table->unsignedBigInteger('user_id');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
 

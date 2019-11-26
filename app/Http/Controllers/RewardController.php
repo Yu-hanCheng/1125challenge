@@ -163,7 +163,7 @@ class RewardController extends Controller
         if (json_decode($reward->hunters)[0]->name != $request->user->name) {
             return response()->json(['result'=>"You don't hunter the reward"],403);
         }
-        $reward->update(['reported'=>1]);
+        $reward->update(['reported_descript'=>"donedonedone"]);
         $user_reward = UserReward::where(
             [['reward_id','=', $id],['hunter_id','!=', $request->user->id]])->delete();
 
@@ -178,7 +178,7 @@ class RewardController extends Controller
 
         if ($reward->user_id != $request->user->id) {
             return response()->json(['result'=>"Permission denied!"],403);
-        }elseif (!$reward->reported) {
+        }elseif (!$reward->reported_descript) {
             return response()->json(['result'=>"The hunter hasn't reported"],403);
         }else {
         

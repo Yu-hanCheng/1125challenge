@@ -29,7 +29,7 @@ class UserController extends Controller
             // history
             $history = UserReward::where('hunter_id',$request->user->id)
             ->join('rewards','rewards.id', '=', 'reward_id')
-            ->select('user_rewards.reward_id','rewards.name','rewards.category','rewards.descript','user_rewards.fee','rewards.chosen','rewards.done')
+            ->select('user_rewards.reward_id','rewards.name','rewards.category','rewards.descript','rewards.reported_descript','user_rewards.fee','rewards.chosen','rewards.done')
             ->get();
         }else {
             //post
@@ -39,7 +39,7 @@ class UserController extends Controller
         foreach ($posts as $post) {
             $hunters = UserReward::where('reward_id',$post->id)
                 ->join('users','users.id', '=', 'user_rewards.hunter_id')
-                ->select('users.name','user_rewards.id as user_rewards_id','user_rewards.fee')->get();
+                ->select('users.name','users.experience','users.achieveRate','user_rewards.id as user_rewards_id','user_rewards.fee')->get();
             $post->update(['hunters'=>$hunters]);
         }
         return response()->json(['history'=>$history,'posts'=>$posts],200);
