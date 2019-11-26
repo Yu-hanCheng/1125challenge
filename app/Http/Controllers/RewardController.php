@@ -8,6 +8,7 @@ use App\User;
 use App\UserReward;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Intervention\Image\ImageManagerStatic as Image;
 class RewardController extends Controller
 {
     /**
@@ -173,6 +174,11 @@ class RewardController extends Controller
         if (json_decode($reward->hunters)->name != $request->user->name) {
             return response()->json(['result'=>"You don't hunter the reward"],403);
         }
+
+        $imageURL = request()->file('img')->store('public');
+        // dd($imageURL); 
+        return asset('storage/' . $imageURL);
+
         $reward->update(['reported_descript'=>"donedonedone"]);
         $user_reward = UserReward::where(
             [['reward_id','=', $id],['hunter_id','!=', $request->user->id]])->delete();
