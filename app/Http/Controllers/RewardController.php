@@ -18,6 +18,12 @@ class RewardController extends Controller
     public function index()
     {
         $rewards = Reward::where('chosen',null)->get();
+        foreach ($rewards as $reward) {
+            $hunters = UserReward::where('reward_id',$reward->id)
+                ->join('users','users.id', '=', 'user_rewards.hunter_id')
+                ->select('users.name','user_rewards.id as user_rewards_id','user_rewards.fee')->get();
+            $reward->update(['hunters'=>$hunters]);
+        }
         return response()->json(['reward'=>$rewards],200);
     }
 
@@ -47,7 +53,7 @@ class RewardController extends Controller
                     ['hunter_id','!=',$hunter_reward->hunter_id],
                 ])->delete();
                 $reward->update([
-                    'hunters'=>json_encode($hunter_reward),
+                    'hunters'=>$hunter_reward,
                     'bonus'=>$hunter_reward->fee,
                     'chosen'=>1]);
 
@@ -147,7 +153,7 @@ class RewardController extends Controller
     { //reported
         
         $reward = Reward::where('id', $id)->first();
-        if (json_decode($reward->hunters)->user->id == $request->user->id) {
+        if (json_decode($reward->hunters)[0]->name != $request->user->name) {
             return response()->json(['result'=>"You don't hunter the reward"],403);
         }
         $reward->update(['reported'=>1]);
@@ -163,8 +169,8 @@ class RewardController extends Controller
         $reward = Reward::where(
             'id', $id)->first();
 
-        if (json_decode($reward->hunters)->user->id == $request->user->id) {
-            return response()->json(['result'=>"You don't hunter the reward"],403);
+        if ($reward->user_id != $request->user->id) {
+            return response()->json(['result'=>"Permission denied!"],403);
         }elseif (!$reward->reported) {
             return response()->json(['result'=>"The hunter hasn't reported"],403);
         }else {
@@ -173,12 +179,13 @@ class RewardController extends Controller
             $user_reward = UserReward::where(
                 'reward_id', $id)->delete();
 
-            $hunter = User::where('id',$request->user->id)->update(['money'=>$request->user->money + $reward->bonus ]);
+            $hunter = User::where('name',json_decode($reward->hunters)[0]->name)->update(['money'=>$request->user->money + $reward->bonus ]);
+            
             $user = User::where('id',$reward->user_id)
                     ->update(['money'=>$request->user->money - $reward->bonus, 
                             'cost'=>$request->user->cost - $reward->bonus, ]);
         }
-        return response()->json(['reward'=>$reward],200);
+        return response()->json(['result'=>"Close the post!"],403);
     }
     /**
      * Remove the specified resource from storage.
