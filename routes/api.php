@@ -24,8 +24,8 @@ Route::group(['middleware' => ['auth.user']], function(){
     Route::post('login', 'UserController@login');
     Route::resource('reward', 'RewardController')->only(['index','store']);
     Route::post('reward/{id}', 'RewardController@show');
-    Route::get('reward/{id}/report', 'RewardController@update');
-    Route::get('reward/{id}/done', 'RewardController@done');
+    Route::post('reward/{id}/report', 'RewardController@update');
+    Route::post('reward/{id}/done', 'RewardController@done');
     Route::post('reward/{id}/choose', 'RewardController@choose');
     Route::resource('profile', 'UserController')->only(['index']);
     Route::get('history', 'UserController@history');

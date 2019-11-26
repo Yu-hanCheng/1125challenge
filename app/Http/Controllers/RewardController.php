@@ -117,7 +117,10 @@ class RewardController extends Controller
             $user_reward->update(['fee'=>$request->fee]);
             return response()->json(['result'=>"Edit fee successfully"],200);
         }
-        
+        $reward = Reward::find($id);
+        if ($reward->chosen) {
+            return response()->json(['result'=>"Not availableh!"],400);
+        }
         $relation = UserReward::create(
             ['reward_id'=>$id,
              'hunter_id'=>$request->user->id,
@@ -159,8 +162,15 @@ class RewardController extends Controller
     public function update(Request $request, $id)
     { //reported
         
+        $va = Validator::make($request->all(), [
+            'img' => 'required|image',
+            'reported_descript' =>'required',
+        ]);
+        if ($va->fails()) {
+            return response()->json(['result'=>$va->errors()],416);
+        }
         $reward = Reward::where('id', $id)->first();
-        if (json_decode($reward->hunters)[0]->name != $request->user->name) {
+        if (json_decode($reward->hunters)->name != $request->user->name) {
             return response()->json(['result'=>"You don't hunter the reward"],403);
         }
         $reward->update(['reported_descript'=>"donedonedone"]);
@@ -172,7 +182,12 @@ class RewardController extends Controller
 
     public function done(Request $request, $id)
     { //done
-        
+        $va = Validator::make($request->all(), [
+            'done' => 'required|integer|between:0,1',
+        ]);
+        if ($va->fails()) {
+            return response()->json(['result'=>$va->errors()],416);
+        }
         $reward = Reward::where(
             'id', $id)->first();
 
@@ -182,11 +197,20 @@ class RewardController extends Controller
             return response()->json(['result'=>"The hunter hasn't reported"],403);
         }else {
         
-            $reward->update(['done'=>1]);
-            $user_reward = UserReward::where(
-                'reward_id', $id)->delete();
+            $reward->update(['done'=>$request->done]);
 
-            $hunter = User::where('name',json_decode($reward->hunters)[0]->name)->update(['money'=>$request->user->money + $reward->bonus ]);
+            
+            
+            if ($request->done) {
+                $achieve=1;
+            }else {
+                $achieve=0;
+            }
+            $hunter = User::where('name',json_decode($reward->hunters)->name)->first();
+            $hunter->update(['money'=>$request->user->money + $reward->bonus ,
+                        'experience'=>$hunter->experience+1,
+                        'achieveRate'=>$hunter->achieveRate+$achieve
+                        ]);
             
             $user = User::where('id',$reward->user_id)
                     ->update(['money'=>$request->user->money - $reward->bonus, 
