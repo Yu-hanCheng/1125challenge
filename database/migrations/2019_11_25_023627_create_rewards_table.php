@@ -18,6 +18,8 @@ class CreateRewardsTable extends Migration
             $table->timestamps();
             $table->string('descript');
             $table->string('name');
+            $table->string('img')->nullable();
+            $table->string('report_descript')->nullable();
             $table->string('hunters')->nullable();
             $table->integer('budget');
             $table->integer('bonus')->nullable();
