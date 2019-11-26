@@ -16,6 +16,7 @@ class CreateUserRewardsTable extends Migration
         Schema::create('user_rewards', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->timestamps();
+            $table->integer('fee');
             $table->unsignedBigInteger('reward_id');
             $table->foreign('reward_id')->references('id')->on('rewards')->onDelete('cascade');
             $table->unsignedBigInteger('hunter_id');

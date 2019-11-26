@@ -28,17 +28,21 @@ class UserController extends Controller
             // history
             $history = UserReward::where('hunter_id',$request->user->id)
             ->join('rewards','rewards.id', '=', 'reward_id')
-            ->select('rewards.name','rewards.done')
+            ->select('rewards.name','rewards.reported','rewards.done')
             ->get();
         }else {
             //post
-            $history = null;
+            $history = null;   
         }
-        $posts=Reward::where('user_id',$request->user->id)
-        ->select('name','done')
-        ->get();
-
+        $posts=Reward::where('user_id',$request->user->id)->get();
+        foreach ($posts as $post) {
+            $hunters = UserReward::where('reward_id',$post->id)
+                ->join('users','users.id', '=', 'user_rewards.hunter_id')
+                ->select('users.name','user_rewards.id as user_rewards_id','user_rewards.fee')->get();
+            $post->update(['hunters'=>$hunters]);
+        }
         return response()->json(['history'=>$history,'posts'=>$posts],200);
+        // return response()->json(['history'=>$history,'posts'=>$posts],200);
 
     }
     public function login(Request $request)
