@@ -19,7 +19,7 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        return response()->json(['name'=>$request->user->name,'money'=>$request->user->money,'role'=>$request->user->role,'cost'=>$request->user->cost],200);
+        return response()->json(['id'=>$request->user->id,'name'=>$request->user->name,'money'=>$request->user->money,'role'=>$request->user->role,'cost'=>$request->user->cost],200);
     }
     
     public function history(Request $request)
