@@ -29,7 +29,7 @@ class UserController extends Controller
             // history
             $history = UserReward::where('hunter_id',$request->user->id)
             ->join('rewards','rewards.id', '=', 'reward_id')
-            ->select('rewards.id','rewards.name','rewards.reported','rewards.chosen','rewards.done')
+            ->select('user_rewards.reward_id','rewards.name','rewards.category','rewards.descript','user_rewards.fee','rewards.chosen','rewards.done')
             ->get();
         }else {
             //post

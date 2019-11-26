@@ -20,7 +20,7 @@ class CreateRewardsTable extends Migration
             $table->string('name');
             $table->string('img')->nullable();
             $table->string('report_descript')->nullable();
-            $table->string('hunters')->nullable();
+            $table->longText('hunters')->nullable();
             $table->integer('budget');
             $table->integer('bonus')->nullable();
             $table->integer('category');

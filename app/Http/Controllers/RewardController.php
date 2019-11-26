@@ -111,6 +111,13 @@ class RewardController extends Controller
      */
     public function show(Request $request,$id) //接案
     {
+        
+        $user_reward =UserReward::where([['reward_id','=',$id],['hunter_id','=',$request->user->id]])->first();
+        if($user_reward){
+            $user_reward->update(['fee'=>$request->fee]);
+            return response()->json(['result'=>"Edit fee successfully"],200);
+        }
+        
         $relation = UserReward::create(
             ['reward_id'=>$id,
              'hunter_id'=>$request->user->id,
