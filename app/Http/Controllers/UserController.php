@@ -167,12 +167,13 @@ class UserController extends Controller
     }
     public function buy(Request $request)
     {
-        $sum = (int)$request->price*$request->count;
+        $client = new Client();
+        $item_info = json_decode($client->request('GET', env('SHOP_BASE_URL').'/api/showitems/'.$request->item_id)->getBody())->data;
+        $sum = (int)$item_info->price*$request->count;
         if ($sum > $request->user->money-$request->user->cost ) {
             return response()->json(['result'=>"Can't afford the transaction!"],400);
         }
         //使用者要先轉帳給斯巴達
-        $client = new Client();
         try {
             $response = $client->request('POST', env('SHOP_BASE_URL').'/api/sheepitem',
             ['form_params' => ['account'=>'sparta',
@@ -201,9 +202,9 @@ class UserController extends Controller
                 Item::create([
                     'user_id'=>$request->user->id,
                     'item_id'=>$request->item_id,
-                    'name'=>$request->name,
-                    'price'=>$request->price,
-                    'img'=>$request->pic,
+                    'name'=>$item_info->item_name,
+                    'price'=>$item_info->price,
+                    'img'=>$item_info->pic,
                     "count"=>$request->count,
                 ]);
             } catch (\Throwable $th) {
@@ -211,7 +212,7 @@ class UserController extends Controller
                 return response()->json(['result'=>$th],500);
             }
             DB::commit();
-            $request->user->money=$response->remittance_balance;
+            // $request->user->money=$response->remittance_balance;
             $request->user->save();
             return response()->json(['result'=>"ok"],200);
         } catch (\Throwable $th) {
