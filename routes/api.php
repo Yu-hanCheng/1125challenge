@@ -30,4 +30,7 @@ Route::group(['middleware' => ['auth.user']], function(){
     Route::post('reward/{id}/choose', 'RewardController@choose');
     Route::resource('profile', 'UserController')->only(['index']);
     Route::get('history', 'UserController@history');
+    Route::get('shop', 'UserController@shop');
+    Route::post('earn', 'UserController@earn');
+    Route::get('buy/{id}', 'UserController@buy');
 });

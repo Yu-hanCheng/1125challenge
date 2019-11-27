@@ -10,6 +10,8 @@ use App\UserReward;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
+use GuzzleHttp\Client;
+
 class UserController extends Controller
 {
     /**
@@ -121,7 +123,47 @@ class UserController extends Controller
     {
         //
     }
+    public function earn(Request $request)
+    {
+        //串金流
+        $user=User::find($request->user->id);
+        $user->update(['money'=>$user->money+$request->earned]);
+        return response()->json($user,201);
+    }
+    public function shop(Request $request)
+    {
+        $max_price=0;
+        if ($request->user->achieveRate > 1) {
+            $max_price=800;
+        }else {
+            $max_price=300;
+        }
+        $client = new Client();
+        $response = $client->request('GET', 'http://35.234.60.173/api/items');
+        
+        $list = json_decode($response->getBody())->items;
+        $products=[];
+        foreach ($list as $element) {
+            if ($element->price<$max_price) {
+                $products[]=$element;
+            }
+        }
+        return $products;
+    }
+    public function buy(Request $request, $id)
+    {
+        //使用者要先轉帳給斯巴達
+        $client = new Client();
+        $response = $client->request('POST', 'http://35.234.60.173/api/sheepitem',
+            ['form_params' => ['account'=>'sparta','item_id'=>$id,'stock'=>2,'api_token'=>'nIAKseLSkT']
+            ]);
+        return response()->json(['result'=>$response->getBody()],201);
+    }
 
+    public function bought_list(Request $request)
+    {
+        //
+    }
     /**
      * Update the specified resource in storage.
      *
