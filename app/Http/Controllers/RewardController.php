@@ -169,18 +169,7 @@ class RewardController extends Controller
             return response()->json(['result'=>$th],500);
         }
         DB::commit();
-        // $reward = Reward::where('id',$id)->first();
-        // if (!$reward->hunters) {
-        //     $reward->update(['hunters'=>$request->user->name]);
-        // }else {
-        //     $reward->update(['hunters'=>$reward->hunters.','.$request->user->name]);
-        // }
         
-        // $hunters = UserReward::where('reward_id',$id)
-        // ->join('users','users.id', '=', 'hunter_id')
-        // ->select('users.name')
-        // ->get();
-        // return response()->json(['hunters'=>$hunters],201);
         return response()->json(['result'=>"apply successfully"],201);
     }
 
@@ -257,31 +246,36 @@ class RewardController extends Controller
 
                 if ($request->done) {
                     $achieve=1;
+                    if (!$request->key) {
+                        return response()->json(['result'=>"Need the key"],416);
+                    }
                 }else {
                     $achieve=0;
                 }
                 $hunter = User::where('name',json_decode($reward->hunters)->name)->first();
-                $hunter->update(['money'=>$request->user->money + $reward->bonus ,
-                            'experience'=>$hunter->experience+1,
-                            'achieveRate'=>$hunter->achieveRate+$achieve
-                            ]);
-                
-                $user = User::where('id',$reward->user_id)
-                        ->update(['money'=>$request->user->money - $reward->bonus, 
-                                'cost'=>$request->user->cost - $reward->bonus, ]);
-                
                 $client = new Client();
                 try {
-                    $response = $client->request('POST', env('BANK_BASE_URL').'/api/shop/transfer', 
-                        ['form_params' => ["userID"=>$request->account,
+                    $response_origin = $client->request('POST', env('BANK_BASE_URL').'/api/user/transfer', 
+                        ['form_params' => ["userID"=>$request->user->bank_account,
                                 "key"=>$request->key,
-                                "account"=>$request->hunter_account,
+                                "account"=>$hunter->bank_account,
                                 "amount"=>strval($reward->bonus),
                                 "isShop"=>strval(0)]
                         ]);
                 } catch (\Throwable $th) {
                     return response()->json(['result'=>$th],500);
-                }           
+                }     
+               //$response
+                $response = json_decode($response_origin->getBody());
+                $request->user->money=$response->remittance_balance;
+                $request->user->cost=$request->user->cost- $reward->bonus;
+                $request->user->save();
+
+                $hunter->update(['money'=>$response->payee_balance,
+                            'experience'=>$hunter->experience+1,
+                            'achieveRate'=>$hunter->achieveRate+$achieve
+                            ]);
+                      
             } catch (\Throwable $th) {
                 DB::rollBack();
                 return response()->json(['result'=>$th],500);

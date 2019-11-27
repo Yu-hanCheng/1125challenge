@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Item;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\User; 
@@ -76,6 +77,7 @@ class UserController extends Controller
             'name' => 'required|unique:users,name|max:15',
             'account' => 'required|unique:users,account|max:15',
             'role' => 'required|integer|between:0,1',
+            'bank_account'=>'required|email'
         ]);
         if ($va->fails()) {
             return response()->json(['result'=>$va->errors()],416);
@@ -87,6 +89,7 @@ class UserController extends Controller
                 'account' => $request->account,
                 'password' => Hash::make($request->password),
                 'role'=>$request->role,
+                'bank_account'=>$request->bank_account,
             ]);
     
         } catch (\Throwable $th) {
@@ -126,21 +129,22 @@ class UserController extends Controller
         $client = new Client();
         try {
             $response = $client->request('POST', env('BANK_BASE_URL').'/api/shop/transfer', 
-            ['form_params' => ["userID"=>"sparta@email.com",
-                            "key"=>"1268993126",
-                            "account"=>'wzoewww@gmail.com',
+            ['form_params' => ["userID"=>env('SPARTA_ACCOUNT'),
+                            "key"=>env('SPARTA_KEY'),
+                            "account"=>$request->user->bank_account,
                             "amount"=>strval($request->earned),
                             "isShop"=>strval(0)]
             ]);
         } catch (\Throwable $th) {
             return response()->json(['result'=>$th],500);
         }
-        return response()->json(['result'=>"successful"],201);
-
-        $user=User::find($request->user->id);
-        $user->update(['money'=>$user->money+$request->earned]);
-        return response()->json($user,201);
+        $response = json_decode($response->getBody());
+        $request->user->money=$response->payee_balance;
+        $request->user->save();
+        
+        return response()->json($request->user,201);
     }
+    
     public function shop(Request $request)
     {
         $max_price=0;
@@ -167,28 +171,39 @@ class UserController extends Controller
         $client = new Client();
         try {
             $response = $client->request('POST', env('SHOP_BASE_URL').'/api/sheepitem',
-            ['form_params' => ['account'=>'sparta','item_id'=>$request->item_id,'stock'=>$request->stock,'api_token'=>env('SHOP_TOKEN',null)]
+            ['form_params' => ['account'=>'sparta',
+            'item_id'=>$request->item_id,
+            'stock'=>$request->stock,
+            'api_token'=>env('SHOP_TOKEN',null),
+            'sheep_email'=>env('SPARTA_ACCOUNT',null),
+            'key'=>env('SPARTA_KEY',null)]
             ]);
         } catch (\Throwable $th) {
             return response()->json(['result'=>$th],201);
         }
         try {
-            $response = $client->request('POST', env('BANK_BASE_URL').'/api/shop/transfer', 
-            ['form_params' => ["userID"=>$request->account,
+            $sum = (int)$request->price*$request->stock;
+            $response = $client->request('POST', env('BANK_BASE_URL').'/api/user/transfer', 
+            ['form_params' => ["userID"=>$request->user->bank_account,
                             "key"=>$request->key,
-                            "account"=>'sparta@email.com',
-                            "amount"=>strval($request->price),
+                            "account"=>env('SPARTA_ACCOUNT'),
+                            "amount"=>strval($sum),
                             "isShop"=>strval(1)]
             ]);
+
+            $response = json_decode($response->getBody());
+            $request->user->money=$response->remittance_balance;
+            $request->user->save();
+            return response()->json(['result'=>"ok"],200);
         } catch (\Throwable $th) {
             return response()->json(['result'=>$th],500);
         }
         return response()->json(['result'=>"successful"],201);
     }   
 
-    public function bought_list(Request $request)
+    public function bought(Request $request)
     {
-        //
+        return Item::where('user_id',$request->user->id)->get();
     }
     /**
      * Update the specified resource in storage.

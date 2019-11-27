@@ -31,6 +31,7 @@ Route::group(['middleware' => ['auth.user']], function(){
     Route::resource('profile', 'UserController')->only(['index']);
     Route::get('history', 'UserController@history');
     Route::get('shop', 'UserController@shop');
+    Route::get('bought', 'UserController@bought');
     Route::post('earn', 'UserController@earn');
     Route::post('buy', 'UserController@buy');
 });
