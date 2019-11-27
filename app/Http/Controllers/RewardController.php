@@ -23,7 +23,7 @@ class RewardController extends Controller
             $hunters = UserReward::where('reward_id',$reward->id)
                 ->join('users','users.id', '=', 'user_rewards.hunter_id')
                 ->select('users.name','users.achieveRate','users.experience','user_rewards.id as user_rewards_id','user_rewards.fee')->get();
-            $reward->update(['hunters'=>$hunters]);
+            $reward->hunters=$hunters;
         }
         return response()->json(['reward'=>$rewards],200);
     }
@@ -104,6 +104,7 @@ class RewardController extends Controller
         return response()->json(['reward'=>Reward::find($reward->id) ],201);
     }
 
+
     /**
      * Display the specified resource.
      *
@@ -111,6 +112,15 @@ class RewardController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function show(Request $request,$id) //接案
+    {
+        $post=Reward::where([['user_id','=',$request->user->id],['id','=',$id]])->first();
+        if ($post) {
+            return response()->json($post,200);
+        }
+        return response()->json(['result'=>"Permission denied!"],403);
+        
+    }
+    public function hunt(Request $request,$id) //接案
     {
         
         $user_reward =UserReward::where([['reward_id','=',$id],['hunter_id','=',$request->user->id]])->first();

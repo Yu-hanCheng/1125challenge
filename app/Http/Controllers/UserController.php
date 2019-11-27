@@ -40,7 +40,7 @@ class UserController extends Controller
             $hunters = UserReward::where('reward_id',$post->id)
                 ->join('users','users.id', '=', 'user_rewards.hunter_id')
                 ->select('users.name','users.experience','users.achieveRate','user_rewards.id as user_rewards_id','user_rewards.fee')->get();
-            $post->update(['hunters'=>$hunters]);
+            $post->hunters=$hunters;
         }
         return response()->json(['history'=>$history,'posts'=>$posts],200);
         // return response()->json(['history'=>$history,'posts'=>$posts],200);
