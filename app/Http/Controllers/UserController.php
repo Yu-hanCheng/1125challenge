@@ -148,17 +148,17 @@ class UserController extends Controller
                 $products[]=$element;
             }
         }
-        return $products;
+        return response()->json(['result'=>$products],200);
     }
-    public function buy(Request $request, $id)
+    public function buy(Request $request)
     {
         //使用者要先轉帳給斯巴達
         $client = new Client();
         $response = $client->request('POST', 'http://35.234.60.173/api/sheepitem',
-            ['form_params' => ['account'=>'sparta','item_id'=>$id,'stock'=>2,'api_token'=>'nIAKseLSkT']
+            ['form_params' => ['account'=>'sparta','item_id'=>$request->item_id,'stock'=>$request->stock,'api_token'=>env('SHOP_TOKEN',null)]
             ]);
         return response()->json(['result'=>$response->getBody()],201);
-    }
+    }   
 
     public function bought_list(Request $request)
     {

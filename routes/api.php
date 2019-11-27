@@ -32,5 +32,5 @@ Route::group(['middleware' => ['auth.user']], function(){
     Route::get('history', 'UserController@history');
     Route::get('shop', 'UserController@shop');
     Route::post('earn', 'UserController@earn');
-    Route::get('buy/{id}', 'UserController@buy');
+    Route::post('buy', 'UserController@buy');
 });
