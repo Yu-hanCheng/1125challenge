@@ -8,6 +8,7 @@ use App\User;
 use App\UserReward;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 use Intervention\Image\ImageManagerStatic as Image;
 class RewardController extends Controller
 {
@@ -53,15 +54,24 @@ class RewardController extends Controller
                     ['reward_id','=',$id],
                     ['hunter_id','!=',$hunter_reward->hunter_id],
                 ])->delete();
-                $reward->update([
-                    'hunters'=>$hunter_reward,
-                    'bonus'=>$hunter_reward->fee,
-                    'chosen'=>1]);
 
-                $user=User::where('id',$reward->user_id)->first();
-                $user->update([
-                        'cost'=>$user->cost + $hunter_reward->fee - $reward->budget,
-                        ]);
+                DB::beginTransaction();
+                try {
+                    $reward->update([
+                        'hunters'=>$hunter_reward,
+                        'bonus'=>$hunter_reward->fee,
+                        'chosen'=>1]);
+    
+                    $user=User::where('id',$reward->user_id)->first();
+                    $user->update([
+                            'cost'=>$user->cost + $hunter_reward->fee - $reward->budget,
+                            ]);
+                } catch (\Throwable $th) {
+                    DB::rollBack();
+                    return response()->json(['result'=>$th],500);
+                }
+                DB::commit();
+                
                 
                 return response()->json(['result'=>"choose ok!"],200);
             }else {
@@ -93,13 +103,21 @@ class RewardController extends Controller
                 "The budget is over you can afford."],416);
         }
 
-        $reward = Reward::create([
-            'name' => $request->name,
-            'budget' => $request->budget,
-            'descript' => $request->descript,
-            'category'=>$request->category,
-            'user_id'=>$request->user->id,
-        ]);
+        DB::beginTransaction();
+        try {
+            $reward = Reward::create([
+                'name' => $request->name,
+                'budget' => $request->budget,
+                'descript' => $request->descript,
+                'category'=>$request->category,
+                'user_id'=>$request->user->id,
+            ]);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return response()->json(['result'=>$th],500);
+        }
+        DB::commit();
+        
         User::where('id',$request->user->id)->update(['cost'=>$request->user->cost + $request->budget ]);
         return response()->json(['reward'=>Reward::find($reward->id) ],201);
     }
@@ -122,21 +140,34 @@ class RewardController extends Controller
     }
     public function hunt(Request $request,$id) //接案
     {
-        
+        $va = Validator::make($request->all(), [
+            'fee' => 'required|integer',
+        ]);
+        if ($va->fails()) {
+            return response()->json(['result'=>$va->errors()],416);
+        }
         $user_reward =UserReward::where([['reward_id','=',$id],['hunter_id','=',$request->user->id]])->first();
-        if($user_reward){
-            $user_reward->update(['fee'=>$request->fee]);
-            return response()->json(['result'=>"Edit fee successfully"],200);
+        
+        DB::beginTransaction();
+        try {
+            if($user_reward){
+                $user_reward->update(['fee'=>$request->fee]);
+                return response()->json(['result'=>"Edit fee successfully"],200);
+            }
+            $reward = Reward::find($id);
+            if ($reward->chosen) {
+                return response()->json(['result'=>"Not availableh!"],400);
+            }
+            $relation = UserReward::create(
+                ['reward_id'=>$id,
+                 'hunter_id'=>$request->user->id,
+                 'fee'=>$request->fee,
+                ]);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return response()->json(['result'=>$th],500);
         }
-        $reward = Reward::find($id);
-        if ($reward->chosen) {
-            return response()->json(['result'=>"Not availableh!"],400);
-        }
-        $relation = UserReward::create(
-            ['reward_id'=>$id,
-             'hunter_id'=>$request->user->id,
-             'fee'=>$request->fee,
-            ]);
+        DB::commit();
         // $reward = Reward::where('id',$id)->first();
         // if (!$reward->hunters) {
         //     $reward->update(['hunters'=>$request->user->name]);
@@ -186,10 +217,18 @@ class RewardController extends Controller
         }
 
         $imageURL = request()->file('img')->store('public');
-
-        $reward->update(['reported_descript'=>$request->reported_descript,'img'=>asset('storage/' . substr($imageURL, 7))]);
-        $user_reward = UserReward::where(
-            [['reward_id','=', $id],['hunter_id','!=', $request->user->id]])->delete();
+        DB::beginTransaction();
+        try {
+            $reward->update(['reported_descript'=>$request->reported_descript,'img'=>asset('storage/' . substr($imageURL, 7))]);
+            $user_reward = UserReward::where(
+                [['reward_id','=', $id],['hunter_id','!=', $request->user->id]])->delete();
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return response()->json(['result'=>$th],500);
+        }
+        DB::commit();
+        
+        
 
         return response()->json(['reward'=>$reward],200);
     }
@@ -211,24 +250,30 @@ class RewardController extends Controller
             return response()->json(['result'=>"The hunter hasn't reported"],403);
         }else {
         
-            $reward->update(['done'=>$request->done]);
+            DB::beginTransaction();
+            try {
+                $reward->update(['done'=>$request->done]);
 
+                if ($request->done) {
+                    $achieve=1;
+                }else {
+                    $achieve=0;
+                }
+                $hunter = User::where('name',json_decode($reward->hunters)->name)->first();
+                $hunter->update(['money'=>$request->user->money + $reward->bonus ,
+                            'experience'=>$hunter->experience+1,
+                            'achieveRate'=>$hunter->achieveRate+$achieve
+                            ]);
+                
+                $user = User::where('id',$reward->user_id)
+                        ->update(['money'=>$request->user->money - $reward->bonus, 
+                                'cost'=>$request->user->cost - $reward->bonus, ]);
+            } catch (\Throwable $th) {
+                DB::rollBack();
+                return response()->json(['result'=>$th],500);
+        }
+        DB::commit();
             
-            
-            if ($request->done) {
-                $achieve=1;
-            }else {
-                $achieve=0;
-            }
-            $hunter = User::where('name',json_decode($reward->hunters)->name)->first();
-            $hunter->update(['money'=>$request->user->money + $reward->bonus ,
-                        'experience'=>$hunter->experience+1,
-                        'achieveRate'=>$hunter->achieveRate+$achieve
-                        ]);
-            
-            $user = User::where('id',$reward->user_id)
-                    ->update(['money'=>$request->user->money - $reward->bonus, 
-                            'cost'=>$request->user->cost - $reward->bonus, ]);
         }
         return response()->json(['result'=>"Close the post!"],403);
     }

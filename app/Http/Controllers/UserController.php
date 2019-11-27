@@ -9,7 +9,7 @@ use App\Reward;
 use App\UserReward;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
-
+use Illuminate\Support\Facades\DB;
 class UserController extends Controller
 {
     /**
@@ -79,13 +79,21 @@ class UserController extends Controller
         if ($va->fails()) {
             return response()->json(['result'=>$va->errors()],416);
         }
-        $user = User::create([
-            'name' => $request->name,
-            'account' => $request->account,
-            'password' => Hash::make($request->password),
-            'role'=>$request->role,
-        ]);
-
+        DB::beginTransaction();
+        try {
+            $user = User::create([
+                'name' => $request->name,
+                'account' => $request->account,
+                'password' => Hash::make($request->password),
+                'role'=>$request->role,
+            ]);
+    
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return response()->json(['result'=>$th],500);
+        }
+        DB::commit();
+        
         return response()->json(['result'=>"Register successfully"],201);
         
         // return response()->json(['result'=>"please enter name and password."],400);
