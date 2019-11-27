@@ -167,13 +167,17 @@ class UserController extends Controller
     }
     public function buy(Request $request)
     {
+        $sum = (int)$request->price*$request->count;
+        if ($sum > $request->user->money-$request->user->cost ) {
+            return response()->json(['result'=>"Can't afford the transaction!"],400);
+        }
         //使用者要先轉帳給斯巴達
         $client = new Client();
         try {
             $response = $client->request('POST', env('SHOP_BASE_URL').'/api/sheepitem',
             ['form_params' => ['account'=>'sparta',
             'item_id'=>$request->item_id,
-            'stock'=>$request->stock,
+            'stock'=>$request->count,
             'api_token'=>env('SHOP_TOKEN',null),
             'sheep_email'=>env('SPARTA_ACCOUNT',null),
             'key'=>env('SPARTA_KEY',null)]
@@ -182,7 +186,7 @@ class UserController extends Controller
             return response()->json(['result'=>$th],201);
         }
         try {
-            $sum = (int)$request->price*$request->stock;
+            
             $response = $client->request('POST', env('BANK_BASE_URL').'/api/user/transfer', 
             ['form_params' => ["userID"=>$request->user->bank_account,
                             "key"=>$request->key,
@@ -192,6 +196,21 @@ class UserController extends Controller
             ]);
 
             $response = json_decode($response->getBody());
+            DB::beginTransaction();
+            try {
+                Item::create([
+                    'user_id'=>$request->user->id,
+                    'item_id'=>$request->item_id,
+                    'name'=>$request->name,
+                    'price'=>$request->price,
+                    'img'=>$request->pic,
+                    "count"=>$request->count,
+                ]);
+            } catch (\Throwable $th) {
+                DB::rollBack();
+                return response()->json(['result'=>$th],500);
+            }
+            DB::commit();
             $request->user->money=$response->remittance_balance;
             $request->user->save();
             return response()->json(['result'=>"ok"],200);

@@ -18,9 +18,11 @@ class CreateItemsTable extends Migration
             $table->timestamps();
             $table->unsignedBigInteger('user_id');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->integer('item_id');
             $table->string('name');
             $table->integer('price');
             $table->string('img');
+            $table->integer('count');
         });
     }
 
