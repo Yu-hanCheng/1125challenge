@@ -139,7 +139,7 @@ class UserController extends Controller
             $max_price=300;
         }
         $client = new Client();
-        $response = $client->request('GET', 'http://35.234.60.173/api/items');
+        $response = $client->request('GET', env('SHOP_BASE_URL',null).'/api/items');
         
         $list = json_decode($response->getBody())->items;
         $products=[];
