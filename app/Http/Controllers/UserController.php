@@ -30,12 +30,13 @@ class UserController extends Controller
             $history = UserReward::where('hunter_id',$request->user->id)
             ->join('rewards','rewards.id', '=', 'reward_id')
             ->select('user_rewards.reward_id','rewards.name','rewards.category','rewards.descript','rewards.reported_descript','user_rewards.fee','rewards.chosen','rewards.done')
+            ->orderBy('rewards.created_at','desc')
             ->get();
         }else {
             //post
             $history = null;   
         }
-        $posts=Reward::where('user_id',$request->user->id)->get();
+        $posts=Reward::where('user_id',$request->user->id)->orderBy('created_at','desc')->get();
         foreach ($posts as $post) {
             $hunters = UserReward::where('reward_id',$post->id)
                 ->join('users','users.id', '=', 'user_rewards.hunter_id')

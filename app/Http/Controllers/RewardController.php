@@ -18,7 +18,7 @@ class RewardController extends Controller
      */
     public function index()
     {
-        $rewards = Reward::where('chosen',0)->get();
+        $rewards = Reward::where('chosen',0)->orderBy('created_at','desc')->get();
         foreach ($rewards as $reward) {
             $hunters = UserReward::where('reward_id',$reward->id)
                 ->join('users','users.id', '=', 'user_rewards.hunter_id')
