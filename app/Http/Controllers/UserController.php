@@ -71,15 +71,6 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        $out = new \Symfony\Component\Console\Output\ConsoleOutput();
-        
-        $client = new Client();
-    
-        $response = $client->request('POST', env('BANK_BASE_URL').'/api/user/register', 
-            ['form_params' => ["camp"=>"sparta","account"=>$request->account,"password"=>$request->password]
-            ]);
-        $out->writeln($response->getBody());
-        return $response->getBody();
         
         $va = Validator::make($request->all(), [
             'name' => 'required|unique:users,name|max:15',
@@ -105,8 +96,6 @@ class UserController extends Controller
         DB::commit();
         
         return response()->json(['result'=>"Register successfully"],201);
-        
-        // return response()->json(['result'=>"please enter name and password."],400);
         
     }
 
