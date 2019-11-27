@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Intervention\Image\ImageManagerStatic as Image;
+use GuzzleHttp\Client;
 class RewardController extends Controller
 {
     /**
@@ -268,6 +269,19 @@ class RewardController extends Controller
                 $user = User::where('id',$reward->user_id)
                         ->update(['money'=>$request->user->money - $reward->bonus, 
                                 'cost'=>$request->user->cost - $reward->bonus, ]);
+                
+                $client = new Client();
+                try {
+                    $response = $client->request('POST', env('BANK_BASE_URL').'/api/shop/transfer', 
+                        ['form_params' => ["userID"=>$request->account,
+                                "key"=>$request->key,
+                                "account"=>$request->hunter_account,
+                                "amount"=>strval($reward->bonus),
+                                "isShop"=>strval(0)]
+                        ]);
+                } catch (\Throwable $th) {
+                    return response()->json(['result'=>$th],500);
+                }           
             } catch (\Throwable $th) {
                 DB::rollBack();
                 return response()->json(['result'=>$th],500);

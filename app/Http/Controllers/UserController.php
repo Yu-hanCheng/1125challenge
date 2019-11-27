@@ -72,7 +72,15 @@ class UserController extends Controller
     public function store(Request $request)
     {
         $out = new \Symfony\Component\Console\Output\ConsoleOutput();
-        $out->writeln("store".$request->role);
+        
+        $client = new Client();
+    
+        $response = $client->request('POST', env('BANK_BASE_URL').'/api/user/register', 
+            ['form_params' => ["camp"=>"sparta","account"=>$request->account,"password"=>$request->password]
+            ]);
+        $out->writeln($response->getBody());
+        return $response->getBody();
+        
         $va = Validator::make($request->all(), [
             'name' => 'required|unique:users,name|max:15',
             'account' => 'required|unique:users,account|max:15',
@@ -126,6 +134,20 @@ class UserController extends Controller
     public function earn(Request $request)
     {
         //串金流
+        $client = new Client();
+        try {
+            $response = $client->request('POST', env('BANK_BASE_URL').'/api/shop/transfer', 
+            ['form_params' => ["userID"=>"sparta@email.com",
+                            "key"=>"1268993126",
+                            "account"=>'wzoewww@gmail.com',
+                            "amount"=>strval($request->earned),
+                            "isShop"=>strval(0)]
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json(['result'=>$th],500);
+        }
+        return response()->json(['result'=>"successful"],201);
+
         $user=User::find($request->user->id);
         $user->update(['money'=>$user->money+$request->earned]);
         return response()->json($user,201);
@@ -154,10 +176,25 @@ class UserController extends Controller
     {
         //使用者要先轉帳給斯巴達
         $client = new Client();
-        $response = $client->request('POST', 'http://35.234.60.173/api/sheepitem',
+        try {
+            $response = $client->request('POST', env('SHOP_BASE_URL').'/api/sheepitem',
             ['form_params' => ['account'=>'sparta','item_id'=>$request->item_id,'stock'=>$request->stock,'api_token'=>env('SHOP_TOKEN',null)]
             ]);
-        return response()->json(['result'=>$response->getBody()],201);
+        } catch (\Throwable $th) {
+            return response()->json(['result'=>$th],201);
+        }
+        try {
+            $response = $client->request('POST', env('BANK_BASE_URL').'/api/shop/transfer', 
+            ['form_params' => ["userID"=>$request->account,
+                            "key"=>$request->key,
+                            "account"=>'sparta@email.com',
+                            "amount"=>strval($request->price),
+                            "isShop"=>strval(1)]
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json(['result'=>$th],500);
+        }
+        return response()->json(['result'=>"successful"],201);
     }   
 
     public function bought_list(Request $request)
