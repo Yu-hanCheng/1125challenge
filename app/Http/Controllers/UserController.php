@@ -223,7 +223,7 @@ class UserController extends Controller
 
     public function bought(Request $request)
     {
-        return Item::where('user_id',$request->user->id)->get();
+        return Item::where('user_id',$request->user->id)->orderBy('created_at','desc')->get();
     }
     /**
      * Update the specified resource in storage.
