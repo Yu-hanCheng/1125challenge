@@ -214,7 +214,7 @@ class UserController extends Controller
             DB::commit();
             $request->user->money=$response->remittance_balance;
             $request->user->save();
-            return response()->json(['result'=>"ok"],200);
+            return response()->json(['result'=>"ok",'charging'=>$response->charging],200);
         } catch (\Throwable $th) {
             return response()->json(['result'=>$th],500);
         }

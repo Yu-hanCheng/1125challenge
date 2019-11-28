@@ -283,7 +283,7 @@ class RewardController extends Controller
         DB::commit();
             
         }
-        return response()->json(['result'=>"Close the post!"],403);
+        return response()->json(['result'=>"Close the post!",'charging'=>$response->charging],200);
     }
     /**
      * Remove the specified resource from storage.
