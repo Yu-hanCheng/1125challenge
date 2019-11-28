@@ -225,6 +225,8 @@ class RewardController extends Controller
 
     public function done(Request $request, $id)
     { //done
+
+        
         $va = Validator::make($request->all(), [
             'done' => 'required|integer|between:0,1',
         ]);
@@ -233,7 +235,9 @@ class RewardController extends Controller
         }
         $reward = Reward::where(
             'id', $id)->first();
-
+        if ($reward->done!=null) {
+            return response()->json(['result'=>"The reward is closed"],403);
+        }
         if ($reward->user_id != $request->user->id) {
             return response()->json(['result'=>"Permission denied!"],403);
         }elseif (!$reward->reported_descript) {
