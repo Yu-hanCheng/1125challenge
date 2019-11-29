@@ -80,7 +80,7 @@ class UserController extends Controller
             'bank_account'=>'required|email'
         ]);
         if ($va->fails()) {
-            return response()->json(['result'=>$va->errors(),'code'=>416],200);
+            return response()->json(['result'=>$va->errors()],416);
         }
         DB::beginTransaction();
         try {
