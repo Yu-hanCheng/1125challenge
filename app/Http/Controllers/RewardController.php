@@ -257,6 +257,22 @@ class RewardController extends Controller
                     if (!$request->key) {
                         return response()->json(['result'=>"Need the key"],416);
                     }
+                    // add picture to reward item table
+                    DB::beginTransaction();
+                    try {
+                        Item::create([
+                            'user_id'=>$request->user->id,
+                            'item_id'=>$id,
+                            'name'=>$reward->name,
+                            'price'=>0,
+                            'img'=>$reward->img,
+                            "count"=>1,
+                        ]);
+                    } catch (\Throwable $th) {
+                        DB::rollBack();
+                        return response()->json(['result'=>$th],500);
+                    }
+                    DB::commit();
                 }else {
                     $achieve=0;
                 }

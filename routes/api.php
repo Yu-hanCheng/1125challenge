@@ -34,4 +34,7 @@ Route::group(['middleware' => ['auth.user']], function(){
     Route::get('bought', 'UserController@bought');
     Route::post('earn', 'UserController@earn');
     Route::post('buy', 'UserController@buy');
+    Route::post('goods/{id}', 'UserController@goods'); //發送貨物 用sparta帳號
+    Route::get('goodlist/{id}', 'UserController@goodlist');//瀏覽陣營貨品
+    
 });

@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use App\User; 
 use App\Reward; 
 use App\UserReward;
+use App\UserGood;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
@@ -225,6 +226,49 @@ class UserController extends Controller
     {
         return Item::where('user_id',$request->user->id)->orderBy('created_at','desc')->get();
     }
+    public function goods(Request $request,$id)
+    {   
+        $headers = [
+            'Content-Type' => 'application/json',
+            'Authorization' => "Bearer ".env('STATION_KEY'),
+        ];
+        $client = new Client([
+            'headers' => $headers
+        ]);
+        $item = Item::find($id);
+        
+        if ($request->price > $request->user->money-$request->user->cost ) {
+            return response()->json(['result'=>"Can't afford the transaction!"],400);
+        }
+
+        try {
+            $response = $client->request('POST', env('STATION_BASE_URL').'/api/goods',
+            ['form_params' => [
+                "name"=>$item->name,
+                "description"=>$item->name,
+                "weight"=>$request->weight,
+                "start_station_name"=>"斯巴達",
+                "des_station_name"=>$request->des_station_name,
+                "price"=>$request->price,]
+            ]);
+            $response_de = json_decode($response->getBody())->data;
+            DB::beginTransaction();
+            try {
+                UserGood::create([
+                    'user_id'=>$request->user->id,
+                    'good_id'=>$response_de->id,
+                ]);
+            } catch (\Throwable $th) {
+                DB::rollBack();
+                return response()->json(['result'=>$th],500);
+            }
+            DB::commit();
+        } catch (\Throwable $th) {
+            return response()->json(['result'=>$th],201);
+        }
+        return response()->json(['result'=>$response_de],500);
+    }
+
     /**
      * Update the specified resource in storage.
      *
@@ -232,9 +276,25 @@ class UserController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function goodlist(Request $request, $id)
     {
-        //
+        $headers = [
+            'Content-Type' => 'application/json',
+            'Authorization' => "Bearer ".env('STATION_KEY'),
+        ];
+        $client = new Client([
+            'headers' => $headers
+        ]);
+        $response = $client->request('GET', env('STATION_BASE_URL').'/api/goods');
+        $response_de = json_decode($response->getBody())->data;
+        $station_goods=[];
+        foreach ($response_de as $good) {
+            if ($good->now_station_id==$id) {
+                $station_goods[]=$good;
+            } 
+        }
+        return response()->json(['result'=>$station_goods],200);
+        dd($response_de);
     }
 
     /**
