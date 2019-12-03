@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Reward;
 use App\User;
 use App\UserReward;
+use App\Item;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
@@ -156,8 +157,7 @@ class RewardController extends Controller
         DB::beginTransaction();
         try {
             if($user_reward){
-                $user_reward->update(['fee'=>$request->fee]);
-                return response()->json(['result'=>"Edit fee successfully"],200);
+                return response()->json(['result'=>"has applied"],200);
             }
             $reward = Reward::find($id);
             if ($reward->chosen) {
@@ -258,9 +258,8 @@ class RewardController extends Controller
                         return response()->json(['result'=>"Need the key"],416);
                     }
                     // add picture to reward item table
-                    DB::beginTransaction();
                     try {
-                        Item::create([
+                        $item = Item::create([
                             'user_id'=>$request->user->id,
                             'item_id'=>$id,
                             'name'=>$reward->name,
@@ -269,10 +268,8 @@ class RewardController extends Controller
                             "count"=>1,
                         ]);
                     } catch (\Throwable $th) {
-                        DB::rollBack();
                         return response()->json(['result'=>$th],500);
                     }
-                    DB::commit();
                 }else {
                     $achieve=0;
                 }
