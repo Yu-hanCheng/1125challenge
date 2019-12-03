@@ -149,15 +149,15 @@ class RewardController extends Controller
             return response()->json(['result'=>$va->errors()],416);
         }
         $reward=Reward::find($id);
-        if ($reward->user_id==$request->user->id) {
-            return response()->json(['result'=>"Can't hunter the reward"],403);
+        if ($reward->user_id==$request->user->id or $reward->chosen) {
+            return response()->json(['result'=>"Can't hunter the reward. You are the post or the hunter is chosen."],403);
         }
         $user_reward =UserReward::where([['reward_id','=',$id],['hunter_id','=',$request->user->id]])->first();
         
         DB::beginTransaction();
         try {
             if($user_reward){
-                return response()->json(['result'=>"has applied"],200);
+                return response()->json(['result'=>"has applied"],400);
             }
             $reward = Reward::find($id);
             if ($reward->chosen) {
