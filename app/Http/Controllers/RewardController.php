@@ -209,7 +209,7 @@ class RewardController extends Controller
         if (json_decode($reward->hunters)->name != $request->user->name) {
             return response()->json(['result'=>"You don't hunter the reward"],403);
         }
-
+        
         $imageURL = request()->file('img')->store('public');
         DB::beginTransaction();
         try {
@@ -262,7 +262,7 @@ class RewardController extends Controller
                         $item = Item::create([
                             'user_id'=>$request->user->id,
                             'item_id'=>$id,
-                            'name'=>$reward->name,
+                            'name'=>substr($reward->name,2),
                             'price'=>0,
                             'img'=>$reward->img,
                             "count"=>1,
