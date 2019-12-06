@@ -160,7 +160,7 @@ class UserController extends Controller
         $list = json_decode($response->getBody())->items;
         $products=[];
         foreach ($list as $element) {
-            if ($element->price<$max_price) {
+            if (10<$element->price and $element->price<$max_price) {
                 $products[]=$element;
             }
         }
