@@ -170,7 +170,11 @@ class UserController extends Controller
     {
         $client = new Client();
         $item_info = json_decode($client->request('GET', env('SHOP_BASE_URL').'/api/showitems/'.$request->item_id)->getBody())->data;
-        $sum = (int)$item_info->price*$request->count;
+        if ((int)$item_info->price<1) {
+            $sum=1;
+        }else {
+            $sum = (int)$item_info->price*$request->count;
+        }
         if ($sum > $request->user->money-$request->user->cost ) {
             return response()->json(['result'=>"Can't afford the transaction!"],400);
         }
