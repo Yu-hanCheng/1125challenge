@@ -53,7 +53,7 @@ class UserController extends Controller
     }
     public function login(Request $request)
     {
-        return response()->json(['user'=> $request->user->only('name','role','money','remember_token')],200);
+        return response()->json(['user'=> $request->user->only('name','avatar','role','money','remember_token')],200);
     }
     /**
      * Show the form for creating a new resource.
@@ -83,6 +83,7 @@ class UserController extends Controller
         if ($va->fails()) {
             return response()->json(['result'=>$va->errors()],416);
         }
+        $imageURL = request()->file('avatar')->store('public/avatars');
         DB::beginTransaction();
         try {
             $user = User::create([
@@ -91,6 +92,8 @@ class UserController extends Controller
                 'password' => Hash::make($request->password),
                 'role'=>$request->role,
                 'bank_account'=>$request->bank_account,
+                'avatar'=>asset('storage/' . substr($imageURL, 7)),
+                
             ]);
     
         } catch (\Throwable $th) {
@@ -180,6 +183,7 @@ class UserController extends Controller
         }
         //使用者要先轉帳給斯巴達
         try {
+            //check key
             $response = $client->request('POST', env('SHOP_BASE_URL').'/api/sheepitem',
             ['form_params' => ['account'=>'sparta',
             'item_id'=>$request->item_id,
