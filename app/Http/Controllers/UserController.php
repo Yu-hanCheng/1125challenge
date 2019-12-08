@@ -83,7 +83,11 @@ class UserController extends Controller
         if ($va->fails()) {
             return response()->json(['result'=>$va->errors()],416);
         }
-        $imageURL = request()->file('avatar')->store('public/avatars');
+        if (request()->file('avatar')) {
+            $imageURL = request()->file('avatar')->store('public/avatars');
+        }else {
+            $imageURL = "public/avatars/spartan.png";
+        }
         DB::beginTransaction();
         try {
             $user = User::create([
