@@ -152,6 +152,10 @@ class RewardController extends Controller
         if ($reward->user_id==$request->user->id or $reward->chosen) {
             return response()->json(['result'=>"Can't hunter the reward. You are the post or the hunter is chosen."],403);
         }
+        $update_fee = UserReward::where(['reward_id'=>$id,'hunter_id'=>$request->user->id])->update(['fee'=>$request->fee]);
+        if ($update_fee) {
+            return response()->json(['result'=>"Update fee"],200);
+        }
         $user_reward =UserReward::where([['reward_id','=',$id],['hunter_id','=',$request->user->id]])->first();
         
         DB::beginTransaction();
@@ -159,7 +163,6 @@ class RewardController extends Controller
             if($user_reward){
                 return response()->json(['result'=>"has applied"],400);
             }
-            $reward = Reward::find($id);
             if ($reward->chosen) {
                 return response()->json(['result'=>"Not availableh!"],400);
             }
