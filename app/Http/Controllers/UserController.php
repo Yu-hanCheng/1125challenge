@@ -270,6 +270,7 @@ class UserController extends Controller
                     'user_id'=>$request->user->id,
                     'good_id'=>$response_de->id,
                 ]);
+                $item->delete();
             } catch (\Throwable $th) {
                 DB::rollBack();
                 return response()->json(['result'=>$th],500);
