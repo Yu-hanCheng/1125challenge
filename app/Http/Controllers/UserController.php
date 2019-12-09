@@ -320,4 +320,21 @@ class UserController extends Controller
     {
         //
     }
+    public function avatar(Request $request,$id)
+    {
+        if (request()->file('avatar')) {
+            $imageURL = request()->file('avatar')->store('public/avatars');
+        }else {
+            $imageURL = "public/avatars/spartan.png";
+        }
+        DB::beginTransaction();
+        try {
+            User::where('id',$id)->update(['avatar'=>asset('storage/' . substr($imageURL, 7))]);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return response()->json(['result'=>$th],500);
+        }
+        DB::commit();
+        return response()->json($request->user,200);
+    }
 }
