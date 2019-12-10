@@ -269,8 +269,7 @@ class UserController extends Controller
                 "price"=>$request->price,]
             ]);
             $response_de = json_decode($response->getBody())->data;
-            $file=fopen('../public/storage/'.explode('/', $item->img)[4], 'r');
-            $contents = fread($file,filesize('../public/storage/'.explode('/', $item->img)[4]));
+            $contents = Storage::get('public/'.explode('/', $item->img)[4]);
             $deliever_photo = new Client([
                 'headers' => ['Authorization' => "Bearer ".env('STATION_KEY'),
                             'Content-Type' => 'multipart/form-data']
@@ -289,6 +288,7 @@ class UserController extends Controller
                     'headers' => ['Content-Type' => 'image/png']
                 ],]
             ]);
+            $response_img_de = json_decode($response_img->getBody());
             DB::beginTransaction();
             try {
                 UserGood::create([
@@ -304,7 +304,7 @@ class UserController extends Controller
         } catch (\Throwable $th) {
             return response()->json(['result'=>$th],201);
         }
-        return response()->json(['result'=>$response_de],500);
+        return response()->json(['result'=>$response_img_de],200);
     }
 
     /**
