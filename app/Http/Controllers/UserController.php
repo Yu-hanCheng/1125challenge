@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use GuzzleHttp\Client;
+use File;
+use Storage;
 
 class UserController extends Controller
 {
@@ -212,12 +214,15 @@ class UserController extends Controller
             $response = json_decode($response->getBody());
             DB::beginTransaction();
             try {
+                $contents = file_get_contents($item_info->pic);
+                $name = substr($item_info->pic, strrpos($item_info->pic, '/') + 1);
+                $stored = Storage::put('public/'.$name, $contents);
                 Item::create([
                     'user_id'=>$request->user->id,
                     'item_id'=>$request->item_id,
                     'name'=>$item_info->item_name,
                     'price'=>$item_info->price,
-                    'img'=>$item_info->pic,
+                    'img'=>asset('storage/'.$name),
                     "count"=>$request->count,
                 ]);
             } catch (\Throwable $th) {
@@ -264,6 +269,26 @@ class UserController extends Controller
                 "price"=>$request->price,]
             ]);
             $response_de = json_decode($response->getBody())->data;
+            $file=fopen('../public/storage/'.explode('/', $item->img)[4], 'r');
+            $contents = fread($file,filesize('../public/storage/'.explode('/', $item->img)[4]));
+            $deliever_photo = new Client([
+                'headers' => ['Authorization' => "Bearer ".env('STATION_KEY'),
+                            'Content-Type' => 'multipart/form-data']
+            ]);
+            $response_img = $deliever_photo->request('POST', env('STATION_BASE_URL').'/api/image',
+            ['multipart' => [
+                
+                [
+                    'name'     => "good_id",
+                    'contents' => $response_de->id
+                ],
+                [
+                    'name'     => "photo",
+                    'contents' => $contents,
+                    'filename' => explode('/', $item->img)[4],
+                    'headers' => ['Content-Type' => 'image/png']
+                ],]
+            ]);
             DB::beginTransaction();
             try {
                 UserGood::create([
