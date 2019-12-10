@@ -250,7 +250,7 @@ class RewardController extends Controller
         }elseif (!$reward->reported_descript) {
             return response()->json(['result'=>"The hunter hasn't reported"],403);
         }else {
-        
+            
             DB::beginTransaction();
             try {
                 $reward->update(['done'=>$request->done]);
@@ -265,7 +265,7 @@ class RewardController extends Controller
                         $item = Item::create([
                             'user_id'=>$request->user->id,
                             'item_id'=>$id,
-                            'name'=>substr($reward->name,2),
+                            'name'=>mb_substr($reward->name,2,strlen($reward->name)-6,"utf-8"),
                             'price'=>0,
                             'img'=>$reward->img,
                             "count"=>1,
